@@ -1,4 +1,4 @@
-package utils
+package service
 
 import (
 	"strings"
@@ -6,7 +6,9 @@ import (
 )
 
 func TestGenerateShortURL(t *testing.T) {
-	shortURL, err := GenerateShortURL()
+	var s = &ServiceImpl{}
+
+	shortURL, err := s.generateShortURL()
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}

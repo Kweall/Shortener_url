@@ -3,29 +3,26 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"ozon/internal/mocks"
+	"ozon/internal/custom_errors"
+	"ozon/internal/handlers/mocks"
 
 	"github.com/gojuno/minimock/v3"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestShortenURLHandler_SuccessNewURL(t *testing.T) {
+	// arrange
 	mc := minimock.NewController(t)
 
-	storeMock := mocks.NewStorageMock(mc)
+	storeMock := mocks.NewServiceMock(mc)
 
-	storeMock.GetShortURLMock.Set(func(ctx context.Context, originalURL string) (string, error) {
-		return "", errors.New("not found")
-	})
-
-	storeMock.SaveURLMock.Set(func(ctx context.Context, originalURL string, shortURL string) error {
-		return nil
+	storeMock.ShortenURLMock.Set(func(ctx context.Context, originalURL string) (string, error) {
+		return "plN_OAp1px", nil
 	})
 
 	reqBody := `{"original_url": "https://example.com"}`
@@ -33,24 +30,24 @@ func TestShortenURLHandler_SuccessNewURL(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 
 	rr := httptest.NewRecorder()
-
+	// act
 	ShortenURLHandler(rr, req, storeMock)
-
-	assert.Equal(t, http.StatusCreated, rr.Code)
+	// assert
+	assert.Equal(t, http.StatusOK, rr.Code)
 
 	var response URLResponse
 	err := json.NewDecoder(rr.Body).Decode(&response)
 	assert.NoError(t, err)
-	assert.NotEmpty(t, response.ShortURL)
+	assert.Len(t, response.ShortURL, 10)
 }
 
 func TestShortenURLHandler_ExistingURL(t *testing.T) {
 	mc := minimock.NewController(t)
 
-	storeMock := mocks.NewStorageMock(mc)
+	storeMock := mocks.NewServiceMock(mc)
 
-	storeMock.GetShortURLMock.Set(func(ctx context.Context, originalURL string) (string, error) {
-		return "abc123", nil
+	storeMock.ShortenURLMock.Set(func(ctx context.Context, originalURL string) (string, error) {
+		return "plN_OAp1px", nil
 	})
 
 	reqBody := `{"original_url": "https://example.com"}`
@@ -66,13 +63,13 @@ func TestShortenURLHandler_ExistingURL(t *testing.T) {
 	var response URLResponse
 	err := json.NewDecoder(rr.Body).Decode(&response)
 	assert.NoError(t, err)
-	assert.Equal(t, "abc123", response.ShortURL)
+	assert.Equal(t, "plN_OAp1px", response.ShortURL)
 }
 
 func TestShortenURLHandler_InvalidMethod(t *testing.T) {
 	mc := minimock.NewController(t)
 
-	storeMock := mocks.NewStorageMock(mc)
+	storeMock := mocks.NewServiceMock(mc)
 
 	req := httptest.NewRequest(http.MethodGet, "/shorten", nil)
 	rr := httptest.NewRecorder()
@@ -86,7 +83,7 @@ func TestShortenURLHandler_InvalidMethod(t *testing.T) {
 func TestShortenURLHandler_InvalidBody(t *testing.T) {
 	mc := minimock.NewController(t)
 
-	storeMock := mocks.NewStorageMock(mc)
+	storeMock := mocks.NewServiceMock(mc)
 
 	reqBody := `{"invalid_field": "https://example.com"}`
 	req := httptest.NewRequest(http.MethodPost, "/shorten", strings.NewReader(reqBody))
@@ -103,13 +100,11 @@ func TestShortenURLHandler_InvalidBody(t *testing.T) {
 func TestRedirectHandler_Success(t *testing.T) {
 	mc := minimock.NewController(t)
 
-	storeMock := mocks.NewStorageMock(mc)
+	storeMock := mocks.NewServiceMock(mc)
 
-	storeMock.GetOriginalURLMock.Set(func(ctx context.Context, shortURL string) (string, error) {
-		return "https://example.com", nil
-	})
+	storeMock.RedirectMock.Expect(context.Background(), "plN_OAp1px").Return("https://example.com", nil)
 
-	req := httptest.NewRequest(http.MethodGet, "/abc123", nil)
+	req := httptest.NewRequest(http.MethodGet, "/plN_OAp1px", nil)
 	rr := httptest.NewRecorder()
 
 	RedirectHandler(rr, req, storeMock)
@@ -125,13 +120,11 @@ func TestRedirectHandler_Success(t *testing.T) {
 func TestRedirectHandler_NotFound(t *testing.T) {
 	mc := minimock.NewController(t)
 
-	storeMock := mocks.NewStorageMock(mc)
+	storeMock := mocks.NewServiceMock(mc)
 
-	storeMock.GetOriginalURLMock.Set(func(ctx context.Context, shortURL string) (string, error) {
-		return "", errors.New("not found")
-	})
+	storeMock.RedirectMock.Expect(context.Background(), "plN_OAp1px").Return("", custom_errors.ErrNoRows)
 
-	req := httptest.NewRequest(http.MethodGet, "/abc123", nil)
+	req := httptest.NewRequest(http.MethodGet, "/plN_OAp1px", nil)
 	rr := httptest.NewRecorder()
 
 	RedirectHandler(rr, req, storeMock)
@@ -143,9 +136,9 @@ func TestRedirectHandler_NotFound(t *testing.T) {
 func TestRedirectHandler_InvalidMethod(t *testing.T) {
 	mc := minimock.NewController(t)
 
-	storeMock := mocks.NewStorageMock(mc)
+	storeMock := mocks.NewServiceMock(mc)
 
-	req := httptest.NewRequest(http.MethodPost, "/abc123", nil)
+	req := httptest.NewRequest(http.MethodPost, "/plN_OAp1px", nil)
 	rr := httptest.NewRecorder()
 
 	RedirectHandler(rr, req, storeMock)

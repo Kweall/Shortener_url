@@ -1,4 +1,4 @@
-package utils
+package service
 
 import (
 	"crypto/rand"
@@ -11,7 +11,7 @@ const (
 	shortURLLength = 10
 )
 
-func GenerateShortURL() (string, error) {
+func (s *ServiceImpl) generateShortURL() (string, error) {
 	result := make([]byte, shortURLLength)
 	for i := range result {
 		idx, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))

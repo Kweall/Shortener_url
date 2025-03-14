@@ -2,8 +2,6 @@
 
 package mocks
 
-//go:generate minimock -i ozon/internal/storage.Storage -o storage_mock.go -n StorageMock -p mocks
-
 import (
 	"context"
 	"sync"
@@ -13,7 +11,7 @@ import (
 	"github.com/gojuno/minimock/v3"
 )
 
-// StorageMock implements mm_storage.Storage
+// StorageMock implements mm_service.Storage
 type StorageMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
@@ -40,7 +38,7 @@ type StorageMock struct {
 	SaveURLMock          mStorageMockSaveURL
 }
 
-// NewStorageMock returns a mock for mm_storage.Storage
+// NewStorageMock returns a mock for mm_service.Storage
 func NewStorageMock(t minimock.Tester) *StorageMock {
 	m := &StorageMock{t: t}
 
@@ -275,7 +273,7 @@ func (mmGetOriginalURL *mStorageMockGetOriginalURL) invocationsDone() bool {
 	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
 }
 
-// GetOriginalURL implements mm_storage.Storage
+// GetOriginalURL implements mm_service.Storage
 func (mmGetOriginalURL *StorageMock) GetOriginalURL(ctx context.Context, shortURL string) (s1 string, err error) {
 	mm_atomic.AddUint64(&mmGetOriginalURL.beforeGetOriginalURLCounter, 1)
 	defer mm_atomic.AddUint64(&mmGetOriginalURL.afterGetOriginalURLCounter, 1)
@@ -618,7 +616,7 @@ func (mmGetShortURL *mStorageMockGetShortURL) invocationsDone() bool {
 	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
 }
 
-// GetShortURL implements mm_storage.Storage
+// GetShortURL implements mm_service.Storage
 func (mmGetShortURL *StorageMock) GetShortURL(ctx context.Context, originalURL string) (s1 string, err error) {
 	mm_atomic.AddUint64(&mmGetShortURL.beforeGetShortURLCounter, 1)
 	defer mm_atomic.AddUint64(&mmGetShortURL.afterGetShortURLCounter, 1)
@@ -986,7 +984,7 @@ func (mmSaveURL *mStorageMockSaveURL) invocationsDone() bool {
 	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
 }
 
-// SaveURL implements mm_storage.Storage
+// SaveURL implements mm_service.Storage
 func (mmSaveURL *StorageMock) SaveURL(ctx context.Context, originalURL string, shortURL string) (err error) {
 	mm_atomic.AddUint64(&mmSaveURL.beforeSaveURLCounter, 1)
 	defer mm_atomic.AddUint64(&mmSaveURL.afterSaveURLCounter, 1)

@@ -6,7 +6,9 @@ import (
 	"log"
 	"net/http"
 	"ozon/internal/handlers"
-	"ozon/internal/storage"
+	"ozon/internal/service"
+	"ozon/internal/storage/memory"
+	"ozon/internal/storage/postgres"
 )
 
 func main() {
@@ -14,14 +16,14 @@ func main() {
 	pgConnStr := flag.String("pg_conn_str", "", "PostgreSQL connection string")
 	flag.Parse()
 
-	var store storage.Storage
+	var storage service.Storage
 	var err error
 
 	switch *storageType {
 	case "memory":
-		store = storage.NewMemoryStorage()
+		storage = memory.NewMemoryStorage()
 	case "postgres":
-		store, err = storage.NewPostgresStorage(*pgConnStr)
+		storage, err = postgres.NewPostgresStorage(*pgConnStr)
 		if err != nil {
 			log.Fatal("Failed to connect to PostgreSQL:", err)
 		}
@@ -29,12 +31,14 @@ func main() {
 		log.Fatal("Unknown storage type")
 	}
 
+	service := service.NewService(storage)
+
 	http.HandleFunc("/shorten", func(w http.ResponseWriter, r *http.Request) {
-		handlers.ShortenURLHandler(w, r, store)
+		handlers.ShortenURLHandler(w, r, service)
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		handlers.RedirectHandler(w, r, store)
+		handlers.RedirectHandler(w, r, service)
 	})
 
 	fmt.Println("Server started on port :8080")

@@ -1,4 +1,4 @@
-package storage_test
+package postgres_test
 
 import (
 	"context"
@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"log"
 	"ozon/internal/config"
-	"ozon/internal/facade"
-	"ozon/internal/storage"
+	"ozon/internal/storage/postgres"
 	"testing"
 
 	"github.com/joho/godotenv"
@@ -15,7 +14,8 @@ import (
 )
 
 func setupPostgresTestDB() (*sql.DB, string, error) {
-	if err := godotenv.Load("C:/Projects/ozon/.env"); err != nil {
+
+	if err := godotenv.Load(); err != nil {
 		log.Printf("Failed to load from .env: %v", err)
 	}
 
@@ -58,23 +58,22 @@ func TestPostgresStorage_SaveAndGet(t *testing.T) {
 	}
 	defer db.Close()
 
-	store, err := storage.NewPostgresStorage(connStr)
+	storage, err := postgres.NewPostgresStorage(connStr)
 	if err != nil {
 		t.Fatalf("Failed to open connection to PostgreSQL: %v", err)
 	}
-	facade := facade.NewDBFacade(store)
 
 	ctx := context.Background()
 
 	originalURL := "https://example.com"
 	shortURL := "abc123XYZ_"
 
-	err = facade.SaveURL(ctx, originalURL, shortURL)
+	err = storage.SaveURL(ctx, originalURL, shortURL)
 	if err != nil {
 		t.Fatalf("Failed to save URL: %v", err)
 	}
 
-	retrievedOriginal, err := facade.GetOriginalURL(ctx, shortURL)
+	retrievedOriginal, err := storage.GetOriginalURL(ctx, shortURL)
 	if err != nil {
 		t.Fatalf("Failed to get original URL: %v", err)
 	}
@@ -82,7 +81,7 @@ func TestPostgresStorage_SaveAndGet(t *testing.T) {
 		t.Errorf("Expected original URL %s, got %s", originalURL, retrievedOriginal)
 	}
 
-	retrievedShort, err := facade.GetShortURL(ctx, originalURL)
+	retrievedShort, err := storage.GetShortURL(ctx, originalURL)
 	if err != nil {
 		t.Fatalf("Failed to get short URL: %v", err)
 	}
@@ -90,7 +89,7 @@ func TestPostgresStorage_SaveAndGet(t *testing.T) {
 		t.Errorf("Expected short URL %s, got %s", shortURL, retrievedShort)
 	}
 
-	_, err = facade.GetOriginalURL(ctx, "nonexistent")
+	_, err = storage.GetOriginalURL(ctx, "nonexistent")
 	if err == nil {
 		t.Error("Expected error for non-existent short URL, got nil")
 	}

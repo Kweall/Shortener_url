@@ -3,11 +3,10 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"ozon/internal/custom_errors"
 	"strings"
-
-	"ozon/internal/storage"
-	"ozon/internal/utils"
 )
 
 type URLRequest struct {
@@ -18,7 +17,13 @@ type URLResponse struct {
 	ShortURL string `json:"short_url"`
 }
 
-func ShortenURLHandler(w http.ResponseWriter, r *http.Request, store storage.Storage) {
+//go:generate minimock -g -i *  -o ./mocks/ -s ".mock.go"
+type Service interface {
+	ShortenURL(ctx context.Context, originalURL string) (string, error)
+	Redirect(ctx context.Context, shortURL string) (string, error)
+}
+
+func ShortenURLHandler(w http.ResponseWriter, r *http.Request, service Service) {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -38,29 +43,17 @@ func ShortenURLHandler(w http.ResponseWriter, r *http.Request, store storage.Sto
 
 	ctx := context.Background()
 
-	if shortURL, err := store.GetShortURL(ctx, req.OriginalURL); err == nil {
-		json.NewEncoder(w).Encode(URLResponse{ShortURL: shortURL})
+	shortURL, err := Service.ShortenURL(service, ctx, req.OriginalURL)
+	if err != nil {
+		http.Error(w, "Failed to generate short URL", http.StatusInternalServerError)
 		return
 	}
 
-	var shortURL string
-	for {
-		var err error
-		shortURL, err = utils.GenerateShortURL()
-		if err != nil {
-			http.Error(w, "Failed to generate short URL", http.StatusInternalServerError)
-			return
-		}
-		if err = store.SaveURL(ctx, req.OriginalURL, shortURL); err == nil {
-			break
-		}
-	}
-
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(URLResponse{ShortURL: shortURL})
 }
 
-func RedirectHandler(w http.ResponseWriter, r *http.Request, store storage.Storage) {
+func RedirectHandler(w http.ResponseWriter, r *http.Request, service Service) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -69,9 +62,13 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request, store storage.Stora
 	ctx := context.Background()
 
 	shortURL := strings.TrimPrefix(r.URL.Path, "/")
-	originalURL, err := store.GetOriginalURL(ctx, shortURL)
+	originalURL, err := service.Redirect(ctx, shortURL)
 	if err != nil {
-		http.Error(w, "URL not found", http.StatusNotFound)
+		if errors.Is(err, custom_errors.ErrNoRows) {
+			http.Error(w, "URL not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "service.Redirect", http.StatusInternalServerError)
 		return
 	}
 
