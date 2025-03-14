@@ -19,7 +19,8 @@ URL Shortener Service – сервис для создания и управле
 ![Postgres storage](./img/postgres_test_coverage.jpg)
 
 
-**Пример**
+**Пример использования**
+
 ![Укорачиватель ссылок](./img/shortener_url.gif)
 
 **Запуск проекта:**
