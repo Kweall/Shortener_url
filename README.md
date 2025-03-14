@@ -24,6 +24,7 @@ URL Shortener Service – сервис для создания и управле
 ![Укорачиватель ссылок](./img/shortener_url.gif)
 
 **Запуск проекта:**
+
 Для локальной разработки и тестирования рекомендуется использовать Docker.  
 ```bash
 git clone https://github.com/your-repo/Shortener_url.git
@@ -32,7 +33,8 @@ docker-compose up --build
 ```  
 Используемый порт: 8080
 
-**Пример .env**
+**Пример .env:**
+
 Введите ваши параметры конфигурации:
 ```bash
 POSTGRES_HOST=localhost
