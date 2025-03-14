@@ -12,6 +12,7 @@ URL Shortener Service – сервис для создания и управле
 - Docker – контейнеризация для локальной разработки и деплоя.
 
 **Покрытие тестами**
+
 ![handlers](./img/handlers_test_coverage.jpg)
 ![service](./img/service_test_coverage.jpg)
 ![Memory storage](./img/memory_test_coverage.jpg)
