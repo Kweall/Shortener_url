@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"ozon/internal/custom_errors"
 	"strings"
@@ -20,7 +21,7 @@ type URLResponse struct {
 //go:generate minimock -g -i *  -o ./mocks/ -s ".mock.go"
 type Service interface {
 	ShortenURL(ctx context.Context, originalURL string) (string, error)
-	Redirect(ctx context.Context, shortURL string) (string, error)
+	OriginalURL(ctx context.Context, shortURL string) (string, error)
 }
 
 func ShortenURLHandler(w http.ResponseWriter, r *http.Request, service Service) {
@@ -53,7 +54,8 @@ func ShortenURLHandler(w http.ResponseWriter, r *http.Request, service Service) 
 	json.NewEncoder(w).Encode(URLResponse{ShortURL: shortURL})
 }
 
-func RedirectHandler(w http.ResponseWriter, r *http.Request, service Service) {
+func OriginalURLHandler(w http.ResponseWriter, r *http.Request, service Service) {
+
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -62,7 +64,7 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request, service Service) {
 	ctx := context.Background()
 
 	shortURL := strings.TrimPrefix(r.URL.Path, "/")
-	originalURL, err := service.Redirect(ctx, shortURL)
+	originalURL, err := service.OriginalURL(ctx, shortURL)
 	if err != nil {
 		if errors.Is(err, custom_errors.ErrNoRows) {
 			http.Error(w, "URL not found", http.StatusNotFound)
@@ -74,4 +76,27 @@ func RedirectHandler(w http.ResponseWriter, r *http.Request, service Service) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"original_url": originalURL})
+}
+
+func RedirectHandler(w http.ResponseWriter, r *http.Request, service Service) {
+
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	ctx := context.Background()
+
+	shortURL := strings.TrimPrefix(r.URL.Path, "/redirect/")
+	originalURL, err := service.OriginalURL(ctx, shortURL)
+	if err != nil {
+		if errors.Is(err, custom_errors.ErrNoRows) {
+			http.Error(w, "URL not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, fmt.Sprintf("Internal server error: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, originalURL, http.StatusFound)
 }

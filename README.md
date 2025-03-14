@@ -32,3 +32,12 @@ docker-compose up --build
 ```  
 Используемый порт: 8080
 
+**Пример .env**
+Введите ваши параметры конфигурации:
+```bash
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5433
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=shortener
+```

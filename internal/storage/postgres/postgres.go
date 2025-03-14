@@ -35,5 +35,6 @@ func NewPostgresStorage(connStr string) (*PostgresStorage, error) {
 		log.Printf("Failed to create table: %v", err)
 		return nil, err
 	}
+
 	return &PostgresStorage{db: db}, nil
 }

@@ -97,17 +97,17 @@ func TestShortenURLHandler_InvalidBody(t *testing.T) {
 	assert.Equal(t, "Original URL is required\n", rr.Body.String())
 }
 
-func TestRedirectHandler_Success(t *testing.T) {
+func TestOriginalURLHandler_Success(t *testing.T) {
 	mc := minimock.NewController(t)
 
 	storeMock := mocks.NewServiceMock(mc)
 
-	storeMock.RedirectMock.Expect(context.Background(), "plN_OAp1px").Return("https://example.com", nil)
+	storeMock.OriginalURLMock.Expect(context.Background(), "plN_OAp1px").Return("https://example.com", nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/plN_OAp1px", nil)
 	rr := httptest.NewRecorder()
 
-	RedirectHandler(rr, req, storeMock)
+	OriginalURLHandler(rr, req, storeMock)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
 
@@ -117,23 +117,23 @@ func TestRedirectHandler_Success(t *testing.T) {
 	assert.Equal(t, "https://example.com", response["original_url"])
 }
 
-func TestRedirectHandler_NotFound(t *testing.T) {
+func TestOriginalURLHandler_NotFound(t *testing.T) {
 	mc := minimock.NewController(t)
 
 	storeMock := mocks.NewServiceMock(mc)
 
-	storeMock.RedirectMock.Expect(context.Background(), "plN_OAp1px").Return("", custom_errors.ErrNoRows)
+	storeMock.OriginalURLMock.Expect(context.Background(), "plN_OAp1px").Return("", custom_errors.ErrNoRows)
 
 	req := httptest.NewRequest(http.MethodGet, "/plN_OAp1px", nil)
 	rr := httptest.NewRecorder()
 
-	RedirectHandler(rr, req, storeMock)
+	OriginalURLHandler(rr, req, storeMock)
 
 	assert.Equal(t, http.StatusNotFound, rr.Code)
 	assert.Equal(t, "URL not found\n", rr.Body.String())
 }
 
-func TestRedirectHandler_InvalidMethod(t *testing.T) {
+func TestOriginalURLHandler_InvalidMethod(t *testing.T) {
 	mc := minimock.NewController(t)
 
 	storeMock := mocks.NewServiceMock(mc)
@@ -141,7 +141,7 @@ func TestRedirectHandler_InvalidMethod(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/plN_OAp1px", nil)
 	rr := httptest.NewRecorder()
 
-	RedirectHandler(rr, req, storeMock)
+	OriginalURLHandler(rr, req, storeMock)
 
 	assert.Equal(t, http.StatusMethodNotAllowed, rr.Code)
 	assert.Equal(t, "Method not allowed\n", rr.Body.String())

@@ -7,5 +7,6 @@ func (m *MemoryStorage) SaveURL(ctx context.Context, originalURL, shortURL strin
 	defer m.mu.Unlock()
 	m.urls[shortURL] = originalURL
 	m.originalToShort[originalURL] = shortURL
+
 	return nil
 }

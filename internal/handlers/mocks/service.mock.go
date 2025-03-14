@@ -16,12 +16,12 @@ type ServiceMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
 
-	funcRedirect          func(ctx context.Context, shortURL string) (s1 string, err error)
-	funcRedirectOrigin    string
-	inspectFuncRedirect   func(ctx context.Context, shortURL string)
-	afterRedirectCounter  uint64
-	beforeRedirectCounter uint64
-	RedirectMock          mServiceMockRedirect
+	funcOriginalURL          func(ctx context.Context, shortURL string) (s1 string, err error)
+	funcOriginalURLOrigin    string
+	inspectFuncOriginalURL   func(ctx context.Context, shortURL string)
+	afterOriginalURLCounter  uint64
+	beforeOriginalURLCounter uint64
+	OriginalURLMock          mServiceMockOriginalURL
 
 	funcShortenURL          func(ctx context.Context, originalURL string) (s1 string, err error)
 	funcShortenURLOrigin    string
@@ -39,8 +39,8 @@ func NewServiceMock(t minimock.Tester) *ServiceMock {
 		controller.RegisterMocker(m)
 	}
 
-	m.RedirectMock = mServiceMockRedirect{mock: m}
-	m.RedirectMock.callArgs = []*ServiceMockRedirectParams{}
+	m.OriginalURLMock = mServiceMockOriginalURL{mock: m}
+	m.OriginalURLMock.callArgs = []*ServiceMockOriginalURLParams{}
 
 	m.ShortenURLMock = mServiceMockShortenURL{mock: m}
 	m.ShortenURLMock.callArgs = []*ServiceMockShortenURLParams{}
@@ -50,50 +50,50 @@ func NewServiceMock(t minimock.Tester) *ServiceMock {
 	return m
 }
 
-type mServiceMockRedirect struct {
+type mServiceMockOriginalURL struct {
 	optional           bool
 	mock               *ServiceMock
-	defaultExpectation *ServiceMockRedirectExpectation
-	expectations       []*ServiceMockRedirectExpectation
+	defaultExpectation *ServiceMockOriginalURLExpectation
+	expectations       []*ServiceMockOriginalURLExpectation
 
-	callArgs []*ServiceMockRedirectParams
+	callArgs []*ServiceMockOriginalURLParams
 	mutex    sync.RWMutex
 
 	expectedInvocations       uint64
 	expectedInvocationsOrigin string
 }
 
-// ServiceMockRedirectExpectation specifies expectation struct of the Service.Redirect
-type ServiceMockRedirectExpectation struct {
+// ServiceMockOriginalURLExpectation specifies expectation struct of the Service.OriginalURL
+type ServiceMockOriginalURLExpectation struct {
 	mock               *ServiceMock
-	params             *ServiceMockRedirectParams
-	paramPtrs          *ServiceMockRedirectParamPtrs
-	expectationOrigins ServiceMockRedirectExpectationOrigins
-	results            *ServiceMockRedirectResults
+	params             *ServiceMockOriginalURLParams
+	paramPtrs          *ServiceMockOriginalURLParamPtrs
+	expectationOrigins ServiceMockOriginalURLExpectationOrigins
+	results            *ServiceMockOriginalURLResults
 	returnOrigin       string
 	Counter            uint64
 }
 
-// ServiceMockRedirectParams contains parameters of the Service.Redirect
-type ServiceMockRedirectParams struct {
+// ServiceMockOriginalURLParams contains parameters of the Service.OriginalURL
+type ServiceMockOriginalURLParams struct {
 	ctx      context.Context
 	shortURL string
 }
 
-// ServiceMockRedirectParamPtrs contains pointers to parameters of the Service.Redirect
-type ServiceMockRedirectParamPtrs struct {
+// ServiceMockOriginalURLParamPtrs contains pointers to parameters of the Service.OriginalURL
+type ServiceMockOriginalURLParamPtrs struct {
 	ctx      *context.Context
 	shortURL *string
 }
 
-// ServiceMockRedirectResults contains results of the Service.Redirect
-type ServiceMockRedirectResults struct {
+// ServiceMockOriginalURLResults contains results of the Service.OriginalURL
+type ServiceMockOriginalURLResults struct {
 	s1  string
 	err error
 }
 
-// ServiceMockRedirectOrigins contains origins of expectations of the Service.Redirect
-type ServiceMockRedirectExpectationOrigins struct {
+// ServiceMockOriginalURLOrigins contains origins of expectations of the Service.OriginalURL
+type ServiceMockOriginalURLExpectationOrigins struct {
 	origin         string
 	originCtx      string
 	originShortURL string
@@ -104,292 +104,292 @@ type ServiceMockRedirectExpectationOrigins struct {
 // Optional() makes method check to work in '0 or more' mode.
 // It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
 // catch the problems when the expected method call is totally skipped during test run.
-func (mmRedirect *mServiceMockRedirect) Optional() *mServiceMockRedirect {
-	mmRedirect.optional = true
-	return mmRedirect
+func (mmOriginalURL *mServiceMockOriginalURL) Optional() *mServiceMockOriginalURL {
+	mmOriginalURL.optional = true
+	return mmOriginalURL
 }
 
-// Expect sets up expected params for Service.Redirect
-func (mmRedirect *mServiceMockRedirect) Expect(ctx context.Context, shortURL string) *mServiceMockRedirect {
-	if mmRedirect.mock.funcRedirect != nil {
-		mmRedirect.mock.t.Fatalf("ServiceMock.Redirect mock is already set by Set")
+// Expect sets up expected params for Service.OriginalURL
+func (mmOriginalURL *mServiceMockOriginalURL) Expect(ctx context.Context, shortURL string) *mServiceMockOriginalURL {
+	if mmOriginalURL.mock.funcOriginalURL != nil {
+		mmOriginalURL.mock.t.Fatalf("ServiceMock.OriginalURL mock is already set by Set")
 	}
 
-	if mmRedirect.defaultExpectation == nil {
-		mmRedirect.defaultExpectation = &ServiceMockRedirectExpectation{}
+	if mmOriginalURL.defaultExpectation == nil {
+		mmOriginalURL.defaultExpectation = &ServiceMockOriginalURLExpectation{}
 	}
 
-	if mmRedirect.defaultExpectation.paramPtrs != nil {
-		mmRedirect.mock.t.Fatalf("ServiceMock.Redirect mock is already set by ExpectParams functions")
+	if mmOriginalURL.defaultExpectation.paramPtrs != nil {
+		mmOriginalURL.mock.t.Fatalf("ServiceMock.OriginalURL mock is already set by ExpectParams functions")
 	}
 
-	mmRedirect.defaultExpectation.params = &ServiceMockRedirectParams{ctx, shortURL}
-	mmRedirect.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
-	for _, e := range mmRedirect.expectations {
-		if minimock.Equal(e.params, mmRedirect.defaultExpectation.params) {
-			mmRedirect.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmRedirect.defaultExpectation.params)
+	mmOriginalURL.defaultExpectation.params = &ServiceMockOriginalURLParams{ctx, shortURL}
+	mmOriginalURL.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmOriginalURL.expectations {
+		if minimock.Equal(e.params, mmOriginalURL.defaultExpectation.params) {
+			mmOriginalURL.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmOriginalURL.defaultExpectation.params)
 		}
 	}
 
-	return mmRedirect
+	return mmOriginalURL
 }
 
-// ExpectCtxParam1 sets up expected param ctx for Service.Redirect
-func (mmRedirect *mServiceMockRedirect) ExpectCtxParam1(ctx context.Context) *mServiceMockRedirect {
-	if mmRedirect.mock.funcRedirect != nil {
-		mmRedirect.mock.t.Fatalf("ServiceMock.Redirect mock is already set by Set")
+// ExpectCtxParam1 sets up expected param ctx for Service.OriginalURL
+func (mmOriginalURL *mServiceMockOriginalURL) ExpectCtxParam1(ctx context.Context) *mServiceMockOriginalURL {
+	if mmOriginalURL.mock.funcOriginalURL != nil {
+		mmOriginalURL.mock.t.Fatalf("ServiceMock.OriginalURL mock is already set by Set")
 	}
 
-	if mmRedirect.defaultExpectation == nil {
-		mmRedirect.defaultExpectation = &ServiceMockRedirectExpectation{}
+	if mmOriginalURL.defaultExpectation == nil {
+		mmOriginalURL.defaultExpectation = &ServiceMockOriginalURLExpectation{}
 	}
 
-	if mmRedirect.defaultExpectation.params != nil {
-		mmRedirect.mock.t.Fatalf("ServiceMock.Redirect mock is already set by Expect")
+	if mmOriginalURL.defaultExpectation.params != nil {
+		mmOriginalURL.mock.t.Fatalf("ServiceMock.OriginalURL mock is already set by Expect")
 	}
 
-	if mmRedirect.defaultExpectation.paramPtrs == nil {
-		mmRedirect.defaultExpectation.paramPtrs = &ServiceMockRedirectParamPtrs{}
+	if mmOriginalURL.defaultExpectation.paramPtrs == nil {
+		mmOriginalURL.defaultExpectation.paramPtrs = &ServiceMockOriginalURLParamPtrs{}
 	}
-	mmRedirect.defaultExpectation.paramPtrs.ctx = &ctx
-	mmRedirect.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+	mmOriginalURL.defaultExpectation.paramPtrs.ctx = &ctx
+	mmOriginalURL.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
 
-	return mmRedirect
+	return mmOriginalURL
 }
 
-// ExpectShortURLParam2 sets up expected param shortURL for Service.Redirect
-func (mmRedirect *mServiceMockRedirect) ExpectShortURLParam2(shortURL string) *mServiceMockRedirect {
-	if mmRedirect.mock.funcRedirect != nil {
-		mmRedirect.mock.t.Fatalf("ServiceMock.Redirect mock is already set by Set")
+// ExpectShortURLParam2 sets up expected param shortURL for Service.OriginalURL
+func (mmOriginalURL *mServiceMockOriginalURL) ExpectShortURLParam2(shortURL string) *mServiceMockOriginalURL {
+	if mmOriginalURL.mock.funcOriginalURL != nil {
+		mmOriginalURL.mock.t.Fatalf("ServiceMock.OriginalURL mock is already set by Set")
 	}
 
-	if mmRedirect.defaultExpectation == nil {
-		mmRedirect.defaultExpectation = &ServiceMockRedirectExpectation{}
+	if mmOriginalURL.defaultExpectation == nil {
+		mmOriginalURL.defaultExpectation = &ServiceMockOriginalURLExpectation{}
 	}
 
-	if mmRedirect.defaultExpectation.params != nil {
-		mmRedirect.mock.t.Fatalf("ServiceMock.Redirect mock is already set by Expect")
+	if mmOriginalURL.defaultExpectation.params != nil {
+		mmOriginalURL.mock.t.Fatalf("ServiceMock.OriginalURL mock is already set by Expect")
 	}
 
-	if mmRedirect.defaultExpectation.paramPtrs == nil {
-		mmRedirect.defaultExpectation.paramPtrs = &ServiceMockRedirectParamPtrs{}
+	if mmOriginalURL.defaultExpectation.paramPtrs == nil {
+		mmOriginalURL.defaultExpectation.paramPtrs = &ServiceMockOriginalURLParamPtrs{}
 	}
-	mmRedirect.defaultExpectation.paramPtrs.shortURL = &shortURL
-	mmRedirect.defaultExpectation.expectationOrigins.originShortURL = minimock.CallerInfo(1)
+	mmOriginalURL.defaultExpectation.paramPtrs.shortURL = &shortURL
+	mmOriginalURL.defaultExpectation.expectationOrigins.originShortURL = minimock.CallerInfo(1)
 
-	return mmRedirect
+	return mmOriginalURL
 }
 
-// Inspect accepts an inspector function that has same arguments as the Service.Redirect
-func (mmRedirect *mServiceMockRedirect) Inspect(f func(ctx context.Context, shortURL string)) *mServiceMockRedirect {
-	if mmRedirect.mock.inspectFuncRedirect != nil {
-		mmRedirect.mock.t.Fatalf("Inspect function is already set for ServiceMock.Redirect")
+// Inspect accepts an inspector function that has same arguments as the Service.OriginalURL
+func (mmOriginalURL *mServiceMockOriginalURL) Inspect(f func(ctx context.Context, shortURL string)) *mServiceMockOriginalURL {
+	if mmOriginalURL.mock.inspectFuncOriginalURL != nil {
+		mmOriginalURL.mock.t.Fatalf("Inspect function is already set for ServiceMock.OriginalURL")
 	}
 
-	mmRedirect.mock.inspectFuncRedirect = f
+	mmOriginalURL.mock.inspectFuncOriginalURL = f
 
-	return mmRedirect
+	return mmOriginalURL
 }
 
-// Return sets up results that will be returned by Service.Redirect
-func (mmRedirect *mServiceMockRedirect) Return(s1 string, err error) *ServiceMock {
-	if mmRedirect.mock.funcRedirect != nil {
-		mmRedirect.mock.t.Fatalf("ServiceMock.Redirect mock is already set by Set")
+// Return sets up results that will be returned by Service.OriginalURL
+func (mmOriginalURL *mServiceMockOriginalURL) Return(s1 string, err error) *ServiceMock {
+	if mmOriginalURL.mock.funcOriginalURL != nil {
+		mmOriginalURL.mock.t.Fatalf("ServiceMock.OriginalURL mock is already set by Set")
 	}
 
-	if mmRedirect.defaultExpectation == nil {
-		mmRedirect.defaultExpectation = &ServiceMockRedirectExpectation{mock: mmRedirect.mock}
+	if mmOriginalURL.defaultExpectation == nil {
+		mmOriginalURL.defaultExpectation = &ServiceMockOriginalURLExpectation{mock: mmOriginalURL.mock}
 	}
-	mmRedirect.defaultExpectation.results = &ServiceMockRedirectResults{s1, err}
-	mmRedirect.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
-	return mmRedirect.mock
+	mmOriginalURL.defaultExpectation.results = &ServiceMockOriginalURLResults{s1, err}
+	mmOriginalURL.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmOriginalURL.mock
 }
 
-// Set uses given function f to mock the Service.Redirect method
-func (mmRedirect *mServiceMockRedirect) Set(f func(ctx context.Context, shortURL string) (s1 string, err error)) *ServiceMock {
-	if mmRedirect.defaultExpectation != nil {
-		mmRedirect.mock.t.Fatalf("Default expectation is already set for the Service.Redirect method")
+// Set uses given function f to mock the Service.OriginalURL method
+func (mmOriginalURL *mServiceMockOriginalURL) Set(f func(ctx context.Context, shortURL string) (s1 string, err error)) *ServiceMock {
+	if mmOriginalURL.defaultExpectation != nil {
+		mmOriginalURL.mock.t.Fatalf("Default expectation is already set for the Service.OriginalURL method")
 	}
 
-	if len(mmRedirect.expectations) > 0 {
-		mmRedirect.mock.t.Fatalf("Some expectations are already set for the Service.Redirect method")
+	if len(mmOriginalURL.expectations) > 0 {
+		mmOriginalURL.mock.t.Fatalf("Some expectations are already set for the Service.OriginalURL method")
 	}
 
-	mmRedirect.mock.funcRedirect = f
-	mmRedirect.mock.funcRedirectOrigin = minimock.CallerInfo(1)
-	return mmRedirect.mock
+	mmOriginalURL.mock.funcOriginalURL = f
+	mmOriginalURL.mock.funcOriginalURLOrigin = minimock.CallerInfo(1)
+	return mmOriginalURL.mock
 }
 
-// When sets expectation for the Service.Redirect which will trigger the result defined by the following
+// When sets expectation for the Service.OriginalURL which will trigger the result defined by the following
 // Then helper
-func (mmRedirect *mServiceMockRedirect) When(ctx context.Context, shortURL string) *ServiceMockRedirectExpectation {
-	if mmRedirect.mock.funcRedirect != nil {
-		mmRedirect.mock.t.Fatalf("ServiceMock.Redirect mock is already set by Set")
+func (mmOriginalURL *mServiceMockOriginalURL) When(ctx context.Context, shortURL string) *ServiceMockOriginalURLExpectation {
+	if mmOriginalURL.mock.funcOriginalURL != nil {
+		mmOriginalURL.mock.t.Fatalf("ServiceMock.OriginalURL mock is already set by Set")
 	}
 
-	expectation := &ServiceMockRedirectExpectation{
-		mock:               mmRedirect.mock,
-		params:             &ServiceMockRedirectParams{ctx, shortURL},
-		expectationOrigins: ServiceMockRedirectExpectationOrigins{origin: minimock.CallerInfo(1)},
+	expectation := &ServiceMockOriginalURLExpectation{
+		mock:               mmOriginalURL.mock,
+		params:             &ServiceMockOriginalURLParams{ctx, shortURL},
+		expectationOrigins: ServiceMockOriginalURLExpectationOrigins{origin: minimock.CallerInfo(1)},
 	}
-	mmRedirect.expectations = append(mmRedirect.expectations, expectation)
+	mmOriginalURL.expectations = append(mmOriginalURL.expectations, expectation)
 	return expectation
 }
 
-// Then sets up Service.Redirect return parameters for the expectation previously defined by the When method
-func (e *ServiceMockRedirectExpectation) Then(s1 string, err error) *ServiceMock {
-	e.results = &ServiceMockRedirectResults{s1, err}
+// Then sets up Service.OriginalURL return parameters for the expectation previously defined by the When method
+func (e *ServiceMockOriginalURLExpectation) Then(s1 string, err error) *ServiceMock {
+	e.results = &ServiceMockOriginalURLResults{s1, err}
 	return e.mock
 }
 
-// Times sets number of times Service.Redirect should be invoked
-func (mmRedirect *mServiceMockRedirect) Times(n uint64) *mServiceMockRedirect {
+// Times sets number of times Service.OriginalURL should be invoked
+func (mmOriginalURL *mServiceMockOriginalURL) Times(n uint64) *mServiceMockOriginalURL {
 	if n == 0 {
-		mmRedirect.mock.t.Fatalf("Times of ServiceMock.Redirect mock can not be zero")
+		mmOriginalURL.mock.t.Fatalf("Times of ServiceMock.OriginalURL mock can not be zero")
 	}
-	mm_atomic.StoreUint64(&mmRedirect.expectedInvocations, n)
-	mmRedirect.expectedInvocationsOrigin = minimock.CallerInfo(1)
-	return mmRedirect
+	mm_atomic.StoreUint64(&mmOriginalURL.expectedInvocations, n)
+	mmOriginalURL.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmOriginalURL
 }
 
-func (mmRedirect *mServiceMockRedirect) invocationsDone() bool {
-	if len(mmRedirect.expectations) == 0 && mmRedirect.defaultExpectation == nil && mmRedirect.mock.funcRedirect == nil {
+func (mmOriginalURL *mServiceMockOriginalURL) invocationsDone() bool {
+	if len(mmOriginalURL.expectations) == 0 && mmOriginalURL.defaultExpectation == nil && mmOriginalURL.mock.funcOriginalURL == nil {
 		return true
 	}
 
-	totalInvocations := mm_atomic.LoadUint64(&mmRedirect.mock.afterRedirectCounter)
-	expectedInvocations := mm_atomic.LoadUint64(&mmRedirect.expectedInvocations)
+	totalInvocations := mm_atomic.LoadUint64(&mmOriginalURL.mock.afterOriginalURLCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmOriginalURL.expectedInvocations)
 
 	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
 }
 
-// Redirect implements mm_handlers.Service
-func (mmRedirect *ServiceMock) Redirect(ctx context.Context, shortURL string) (s1 string, err error) {
-	mm_atomic.AddUint64(&mmRedirect.beforeRedirectCounter, 1)
-	defer mm_atomic.AddUint64(&mmRedirect.afterRedirectCounter, 1)
+// OriginalURL implements mm_handlers.Service
+func (mmOriginalURL *ServiceMock) OriginalURL(ctx context.Context, shortURL string) (s1 string, err error) {
+	mm_atomic.AddUint64(&mmOriginalURL.beforeOriginalURLCounter, 1)
+	defer mm_atomic.AddUint64(&mmOriginalURL.afterOriginalURLCounter, 1)
 
-	mmRedirect.t.Helper()
+	mmOriginalURL.t.Helper()
 
-	if mmRedirect.inspectFuncRedirect != nil {
-		mmRedirect.inspectFuncRedirect(ctx, shortURL)
+	if mmOriginalURL.inspectFuncOriginalURL != nil {
+		mmOriginalURL.inspectFuncOriginalURL(ctx, shortURL)
 	}
 
-	mm_params := ServiceMockRedirectParams{ctx, shortURL}
+	mm_params := ServiceMockOriginalURLParams{ctx, shortURL}
 
 	// Record call args
-	mmRedirect.RedirectMock.mutex.Lock()
-	mmRedirect.RedirectMock.callArgs = append(mmRedirect.RedirectMock.callArgs, &mm_params)
-	mmRedirect.RedirectMock.mutex.Unlock()
+	mmOriginalURL.OriginalURLMock.mutex.Lock()
+	mmOriginalURL.OriginalURLMock.callArgs = append(mmOriginalURL.OriginalURLMock.callArgs, &mm_params)
+	mmOriginalURL.OriginalURLMock.mutex.Unlock()
 
-	for _, e := range mmRedirect.RedirectMock.expectations {
+	for _, e := range mmOriginalURL.OriginalURLMock.expectations {
 		if minimock.Equal(*e.params, mm_params) {
 			mm_atomic.AddUint64(&e.Counter, 1)
 			return e.results.s1, e.results.err
 		}
 	}
 
-	if mmRedirect.RedirectMock.defaultExpectation != nil {
-		mm_atomic.AddUint64(&mmRedirect.RedirectMock.defaultExpectation.Counter, 1)
-		mm_want := mmRedirect.RedirectMock.defaultExpectation.params
-		mm_want_ptrs := mmRedirect.RedirectMock.defaultExpectation.paramPtrs
+	if mmOriginalURL.OriginalURLMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmOriginalURL.OriginalURLMock.defaultExpectation.Counter, 1)
+		mm_want := mmOriginalURL.OriginalURLMock.defaultExpectation.params
+		mm_want_ptrs := mmOriginalURL.OriginalURLMock.defaultExpectation.paramPtrs
 
-		mm_got := ServiceMockRedirectParams{ctx, shortURL}
+		mm_got := ServiceMockOriginalURLParams{ctx, shortURL}
 
 		if mm_want_ptrs != nil {
 
 			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
-				mmRedirect.t.Errorf("ServiceMock.Redirect got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
-					mmRedirect.RedirectMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+				mmOriginalURL.t.Errorf("ServiceMock.OriginalURL got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmOriginalURL.OriginalURLMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
 			}
 
 			if mm_want_ptrs.shortURL != nil && !minimock.Equal(*mm_want_ptrs.shortURL, mm_got.shortURL) {
-				mmRedirect.t.Errorf("ServiceMock.Redirect got unexpected parameter shortURL, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
-					mmRedirect.RedirectMock.defaultExpectation.expectationOrigins.originShortURL, *mm_want_ptrs.shortURL, mm_got.shortURL, minimock.Diff(*mm_want_ptrs.shortURL, mm_got.shortURL))
+				mmOriginalURL.t.Errorf("ServiceMock.OriginalURL got unexpected parameter shortURL, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmOriginalURL.OriginalURLMock.defaultExpectation.expectationOrigins.originShortURL, *mm_want_ptrs.shortURL, mm_got.shortURL, minimock.Diff(*mm_want_ptrs.shortURL, mm_got.shortURL))
 			}
 
 		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
-			mmRedirect.t.Errorf("ServiceMock.Redirect got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
-				mmRedirect.RedirectMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+			mmOriginalURL.t.Errorf("ServiceMock.OriginalURL got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmOriginalURL.OriginalURLMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
 		}
 
-		mm_results := mmRedirect.RedirectMock.defaultExpectation.results
+		mm_results := mmOriginalURL.OriginalURLMock.defaultExpectation.results
 		if mm_results == nil {
-			mmRedirect.t.Fatal("No results are set for the ServiceMock.Redirect")
+			mmOriginalURL.t.Fatal("No results are set for the ServiceMock.OriginalURL")
 		}
 		return (*mm_results).s1, (*mm_results).err
 	}
-	if mmRedirect.funcRedirect != nil {
-		return mmRedirect.funcRedirect(ctx, shortURL)
+	if mmOriginalURL.funcOriginalURL != nil {
+		return mmOriginalURL.funcOriginalURL(ctx, shortURL)
 	}
-	mmRedirect.t.Fatalf("Unexpected call to ServiceMock.Redirect. %v %v", ctx, shortURL)
+	mmOriginalURL.t.Fatalf("Unexpected call to ServiceMock.OriginalURL. %v %v", ctx, shortURL)
 	return
 }
 
-// RedirectAfterCounter returns a count of finished ServiceMock.Redirect invocations
-func (mmRedirect *ServiceMock) RedirectAfterCounter() uint64 {
-	return mm_atomic.LoadUint64(&mmRedirect.afterRedirectCounter)
+// OriginalURLAfterCounter returns a count of finished ServiceMock.OriginalURL invocations
+func (mmOriginalURL *ServiceMock) OriginalURLAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmOriginalURL.afterOriginalURLCounter)
 }
 
-// RedirectBeforeCounter returns a count of ServiceMock.Redirect invocations
-func (mmRedirect *ServiceMock) RedirectBeforeCounter() uint64 {
-	return mm_atomic.LoadUint64(&mmRedirect.beforeRedirectCounter)
+// OriginalURLBeforeCounter returns a count of ServiceMock.OriginalURL invocations
+func (mmOriginalURL *ServiceMock) OriginalURLBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmOriginalURL.beforeOriginalURLCounter)
 }
 
-// Calls returns a list of arguments used in each call to ServiceMock.Redirect.
+// Calls returns a list of arguments used in each call to ServiceMock.OriginalURL.
 // The list is in the same order as the calls were made (i.e. recent calls have a higher index)
-func (mmRedirect *mServiceMockRedirect) Calls() []*ServiceMockRedirectParams {
-	mmRedirect.mutex.RLock()
+func (mmOriginalURL *mServiceMockOriginalURL) Calls() []*ServiceMockOriginalURLParams {
+	mmOriginalURL.mutex.RLock()
 
-	argCopy := make([]*ServiceMockRedirectParams, len(mmRedirect.callArgs))
-	copy(argCopy, mmRedirect.callArgs)
+	argCopy := make([]*ServiceMockOriginalURLParams, len(mmOriginalURL.callArgs))
+	copy(argCopy, mmOriginalURL.callArgs)
 
-	mmRedirect.mutex.RUnlock()
+	mmOriginalURL.mutex.RUnlock()
 
 	return argCopy
 }
 
-// MinimockRedirectDone returns true if the count of the Redirect invocations corresponds
+// MinimockOriginalURLDone returns true if the count of the OriginalURL invocations corresponds
 // the number of defined expectations
-func (m *ServiceMock) MinimockRedirectDone() bool {
-	if m.RedirectMock.optional {
+func (m *ServiceMock) MinimockOriginalURLDone() bool {
+	if m.OriginalURLMock.optional {
 		// Optional methods provide '0 or more' call count restriction.
 		return true
 	}
 
-	for _, e := range m.RedirectMock.expectations {
+	for _, e := range m.OriginalURLMock.expectations {
 		if mm_atomic.LoadUint64(&e.Counter) < 1 {
 			return false
 		}
 	}
 
-	return m.RedirectMock.invocationsDone()
+	return m.OriginalURLMock.invocationsDone()
 }
 
-// MinimockRedirectInspect logs each unmet expectation
-func (m *ServiceMock) MinimockRedirectInspect() {
-	for _, e := range m.RedirectMock.expectations {
+// MinimockOriginalURLInspect logs each unmet expectation
+func (m *ServiceMock) MinimockOriginalURLInspect() {
+	for _, e := range m.OriginalURLMock.expectations {
 		if mm_atomic.LoadUint64(&e.Counter) < 1 {
-			m.t.Errorf("Expected call to ServiceMock.Redirect at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+			m.t.Errorf("Expected call to ServiceMock.OriginalURL at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
 		}
 	}
 
-	afterRedirectCounter := mm_atomic.LoadUint64(&m.afterRedirectCounter)
+	afterOriginalURLCounter := mm_atomic.LoadUint64(&m.afterOriginalURLCounter)
 	// if default expectation was set then invocations count should be greater than zero
-	if m.RedirectMock.defaultExpectation != nil && afterRedirectCounter < 1 {
-		if m.RedirectMock.defaultExpectation.params == nil {
-			m.t.Errorf("Expected call to ServiceMock.Redirect at\n%s", m.RedirectMock.defaultExpectation.returnOrigin)
+	if m.OriginalURLMock.defaultExpectation != nil && afterOriginalURLCounter < 1 {
+		if m.OriginalURLMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to ServiceMock.OriginalURL at\n%s", m.OriginalURLMock.defaultExpectation.returnOrigin)
 		} else {
-			m.t.Errorf("Expected call to ServiceMock.Redirect at\n%s with params: %#v", m.RedirectMock.defaultExpectation.expectationOrigins.origin, *m.RedirectMock.defaultExpectation.params)
+			m.t.Errorf("Expected call to ServiceMock.OriginalURL at\n%s with params: %#v", m.OriginalURLMock.defaultExpectation.expectationOrigins.origin, *m.OriginalURLMock.defaultExpectation.params)
 		}
 	}
 	// if func was set then invocations count should be greater than zero
-	if m.funcRedirect != nil && afterRedirectCounter < 1 {
-		m.t.Errorf("Expected call to ServiceMock.Redirect at\n%s", m.funcRedirectOrigin)
+	if m.funcOriginalURL != nil && afterOriginalURLCounter < 1 {
+		m.t.Errorf("Expected call to ServiceMock.OriginalURL at\n%s", m.funcOriginalURLOrigin)
 	}
 
-	if !m.RedirectMock.invocationsDone() && afterRedirectCounter > 0 {
-		m.t.Errorf("Expected %d calls to ServiceMock.Redirect at\n%s but found %d calls",
-			mm_atomic.LoadUint64(&m.RedirectMock.expectedInvocations), m.RedirectMock.expectedInvocationsOrigin, afterRedirectCounter)
+	if !m.OriginalURLMock.invocationsDone() && afterOriginalURLCounter > 0 {
+		m.t.Errorf("Expected %d calls to ServiceMock.OriginalURL at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.OriginalURLMock.expectedInvocations), m.OriginalURLMock.expectedInvocationsOrigin, afterOriginalURLCounter)
 	}
 }
 
@@ -740,7 +740,7 @@ func (m *ServiceMock) MinimockShortenURLInspect() {
 func (m *ServiceMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
-			m.MinimockRedirectInspect()
+			m.MinimockOriginalURLInspect()
 
 			m.MinimockShortenURLInspect()
 		}
@@ -766,6 +766,6 @@ func (m *ServiceMock) MinimockWait(timeout mm_time.Duration) {
 func (m *ServiceMock) minimockDone() bool {
 	done := true
 	return done &&
-		m.MinimockRedirectDone() &&
+		m.MinimockOriginalURLDone() &&
 		m.MinimockShortenURLDone()
 }

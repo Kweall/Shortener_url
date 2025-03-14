@@ -16,8 +16,10 @@ func main() {
 	pgConnStr := flag.String("pg_conn_str", "", "PostgreSQL connection string")
 	flag.Parse()
 
-	var storage service.Storage
-	var err error
+	var (
+		storage service.Storage
+		err     error
+	)
 
 	switch *storageType {
 	case "memory":
@@ -37,8 +39,12 @@ func main() {
 		handlers.ShortenURLHandler(w, r, service)
 	})
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/redirect/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.RedirectHandler(w, r, service)
+	})
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		handlers.OriginalURLHandler(w, r, service)
 	})
 
 	fmt.Println("Server started on port :8080")

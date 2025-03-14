@@ -2,7 +2,7 @@ package memory
 
 import (
 	"context"
-	"fmt"
+	"ozon/internal/custom_errors"
 )
 
 func (m *MemoryStorage) GetOriginalURL(ctx context.Context, shortURL string) (string, error) {
@@ -10,7 +10,8 @@ func (m *MemoryStorage) GetOriginalURL(ctx context.Context, shortURL string) (st
 	defer m.mu.RUnlock()
 	original, exists := m.urls[shortURL]
 	if !exists {
-		return "", fmt.Errorf("url not found")
+		return "", custom_errors.ErrNoRows
 	}
+
 	return original, nil
 }
